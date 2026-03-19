@@ -1,0 +1,23 @@
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    restart: unless-stopped
+    extra_hosts:
+      - "portainer.home.local:100.122.46.43"
+      - "cockpit.home.local:100.122.46.43"
+      - "ha.home.local:100.122.46.43"
+      - "files.home.local:100.122.46.43"
+      - "uptime.home.local:100.122.46.43"
+      - "logs.home.local:100.122.46.43"
+      - "dns.home.local:100.122.46.43"
+      - "vault.home.local:100.122.46.43"
+      - "dash.home.local:100.122.46.43"
+      - "sync.home.local:100.122.46.43"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./homarr/appdata:/appdata
+    env_file:
+      - .env
+    ports:
+      - '7575:7575'

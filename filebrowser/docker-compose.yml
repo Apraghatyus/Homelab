@@ -1,0 +1,20 @@
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:s6
+    container_name: filebrowser
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Bogota
+    ports:
+      - "8080:80"
+    volumes:
+      # Directorios NAS (los mismos que usa Samba)
+      - /srv/nas/public:/srv/public
+      - /srv/nas/media:/srv/media
+      - /srv/nas/backups:/srv/backups
+      - /srv/nas/games:/srv/games
+      # Base de datos y configuración
+      - ./filebrowser.db:/database/filebrowser.db
+      - ./settings.json:/config/settings.json

@@ -1,0 +1,32 @@
+services:
+  samba:
+    image: dperson/samba
+    container_name: samba
+    restart: unless-stopped
+    environment:
+      TZ: "America/Bogota"
+    env_file:
+      - .env
+    ports:
+      - "445:445"
+      - "139:139"
+    volumes:
+      # Shared folders - adjust paths to your actual storage
+      - /srv/nas/public:/share/public
+      - /srv/nas/media:/share/media
+      - /srv/nas/backups:/share/backups
+      - /srv/nas/games:/share/games
+    command: >
+      -u "${SAMBA_USER};${SAMBA_PASSWORD}"
+      -s "Public;/share/public;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Archivos compartidos"
+      -s "Media;/share/media;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Peliculas musica y series"
+      -s "Backups;/share/backups;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Respaldos"
+      -s "Games;/share/games;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Archivos de juegos"
+      -n
+      -p
+    networks:
+      - nas
+
+networks:
+  nas:
+    driver: bridge

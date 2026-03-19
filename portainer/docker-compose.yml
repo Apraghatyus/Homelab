@@ -1,0 +1,20 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - default
+      - npm_default
+
+volumes:
+  portainer_data:
+
+networks:
+  npm_default:
+    external: true

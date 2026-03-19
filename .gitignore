@@ -1,0 +1,64 @@
+# ===================================
+# Homelab Apraghatyus - .gitignore
+# ===================================
+
+# --- Secretos y credenciales ---
+.env
+*.env
+!.env.example
+
+# --- Datos de volúmenes Docker ---
+**/data/
+**/db/
+
+# --- Bases de datos ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Certificados SSL y llaves privadas ---
+**/certs/
+**/letsencrypt/
+
+# --- Syncthing internals ---
+.stfolder/
+.stignore
+
+# --- Home Assistant (versionar solo configuration.yaml) ---
+home-assistant/config/automations.yaml
+home-assistant/config/scripts.yaml
+home-assistant/config/scenes.yaml
+home-assistant/config/themes/
+home-assistant/config/.storage/
+home-assistant/config/home-assistant_v2.db*
+home-assistant/config/tts/
+home-assistant/config/.cloud/
+
+# --- Homarr data ---
+homarr/homarr/
+
+# --- Syncthing config (contiene device keys) ---
+syncthing/config/
+
+# --- NPM data ---
+npm/data/
+
+# --- Archivos del sistema ---
+*.log
+*.bak
+*.tmp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# --- Carpetas vacías / en desarrollo ---
+openclaw/
+
+# --- Home Assistant (adicional) ---
+home-assistant/config/.cache/
+home-assistant/config/.ha_run.lock
+home-assistant/config/.HA_VERSION
+home-assistant/config/blueprints/
+home-assistant/config/secrets.yaml
+home-assistant/config/*.log.*
