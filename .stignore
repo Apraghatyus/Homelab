@@ -1,0 +1,63 @@
+// Excluir bases de datos y archivos temporales de Syncthing
+syncthing/config/index-v2/
+syncthing/config/csrftokens.txt
+syncthing/config/*.db*
+
+// Excluir archivos temporales de Docker y otros servicios
+**/data/*.db-wal
+**/data/*.db-shm
+**/*.tmp
+**/.~lock.*
+
+// Excluir logs de todos los servicios
+**/logs/
+**/log/
+**/*.log
+
+// Archivos temporales
+**/*.tmp
+**/.~lock.*
+**/~$*
+
+// Bases de datos activas (SQLite)
+**/*.db-wal
+**/*.db-shm
+
+// Cachés
+**/.cache/
+**/node_modules/
+**/__pycache__/
+
+// Archivos sensibles (nunca sincronizar)
+**/.env
+**/secrets/
+**/*.key
+**/*.pem
+
+// Archivos de sistema
+**/Thumbs.db
+**/.DS_Store
+**/desktop.ini
+
+// --- Datos de volúmenes Docker (root-owned, permission denied) ---
+**/data/
+**/db/
+**/letsencrypt/
+
+// --- Git ---
+.git
+
+// --- Homarr data ---
+homarr/homarr/
+
+// --- NPM data ---
+npm/data/
+
+// --- Home Assistant autogenerados ---
+home-assistant/config/.storage/
+home-assistant/config/.HA_VERSION
+home-assistant/config/.cloud/
+home-assistant/config/blueprints/
+home-assistant/config/tts/
+home-assistant/config/themes/
+home-assistant/config/home-assistant_v2.db*
