@@ -61,3 +61,4 @@ home-assistant/config/secrets.yaml
 home-assistant/config/*.log.*
 openclaw/.env
 *.backup
+*.db
