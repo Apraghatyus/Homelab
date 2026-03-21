@@ -1,31 +1,68 @@
 services:
   samba:
-    image: dperson/samba
+    image: servercontainers/samba:latest
     container_name: samba
     restart: unless-stopped
     environment:
       TZ: "America/Bogota"
-    env_file:
-      - .env
+      SAMBA_CONF_WORKGROUP: HOMELAB
+      SAMBA_CONF_MAP_TO_GUEST: "Bad User"
+
+      ACCOUNT_JuanCamilo: ${SAMBA_PASSWORD}
+      UID_JuanCamilo: 1000
+      GROUP_JuanCamilo: smb
+
+      SAMBA_GLOBAL_STANZA: ${SAMBA_GLOBAL_STANZA}
+      SAMBA_GLOBAL_STANZA2: ${SAMBA_GLOBAL_STANZA2}
+      SAMBA_GLOBAL_STANZA3: ${SAMBA_GLOBAL_STANZA3}
+      SAMBA_GLOBAL_STANZA4: ${SAMBA_GLOBAL_STANZA4}
+      SAMBA_GLOBAL_STANZA5: ${SAMBA_GLOBAL_STANZA5}
+      SAMBA_GLOBAL_STANZA6: ${SAMBA_GLOBAL_STANZA6}
+
+      SAMBA_VOLUME_CONFIG_Public: >-
+        [Public];
+        path=/share/public;
+        valid users=JuanCamilo;
+        browsable=yes;
+        writable=yes;
+        comment=Archivos compartidos
+
+      SAMBA_VOLUME_CONFIG_Media: >-
+        [Media];
+        path=/share/media;
+        valid users=JuanCamilo;
+        browsable=yes;
+        writable=yes;
+        comment=Peliculas musica y series
+
+      SAMBA_VOLUME_CONFIG_Backups: >-
+        [Backups];
+        path=/share/backups;
+        valid users=JuanCamilo;
+        browsable=yes;
+        writable=yes;
+        comment=Respaldos
+
+      SAMBA_VOLUME_CONFIG_Games: >-
+        [Games];
+        path=/share/games;
+        valid users=JuanCamilo;
+        browsable=yes;
+        writable=yes;
+        comment=Archivos de juegos
+
     ports:
       - "445:445"
       - "139:139"
     volumes:
-      # Shared folders - adjust paths to your actual storage
       - /srv/nas/public:/share/public
       - /srv/nas/media:/share/media
       - /srv/nas/backups:/share/backups
       - /srv/nas/games:/share/games
-    command: >
-      -u "${SAMBA_USER};${SAMBA_PASSWORD}"
-      -s "Public;/share/public;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Archivos compartidos"
-      -s "Media;/share/media;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Peliculas musica y series"
-      -s "Backups;/share/backups;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Respaldos"
-      -s "Games;/share/games;yes;no;no;${SAMBA_USER};${SAMBA_USER};${SAMBA_USER};Archivos de juegos"
-      -n
-      -p
     networks:
       - nas
+    env_file:
+      - .env
 
 networks:
   nas:
