@@ -73,3 +73,4 @@ backups/uptime-kuma/
 
 # --- Gotify (pendiente migración a ntfy) ---
 gotify/
+backups/scripts/ntfy-notify.sh

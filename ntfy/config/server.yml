@@ -1,0 +1,32 @@
+# ntfy server configuration — Homelab Apraghatyus
+# Docs: https://docs.ntfy.sh/config/
+
+# Base URL (requerida para links en notificaciones y web UI)
+base-url: https://ntfy.home.local
+
+# Escuchar en puerto 80 dentro del contenedor
+listen-http: ":80"
+
+# Cache de mensajes (persistencia entre reinicios)
+cache-file: "/var/cache/ntfy/cache.db"
+cache-duration: "24h"
+
+# Archivos adjuntos
+attachment-cache-dir: "/var/cache/ntfy/attachments"
+attachment-total-size-limit: "100M"
+attachment-file-size-limit: "5M"
+attachment-expiry-duration: "24h"
+
+# Autenticación y control de acceso
+auth-file: "/var/lib/ntfy/user.db"
+auth-default-access: "deny-all"
+
+# Detrás de reverse proxy (NPM)
+behind-proxy: true
+
+# Logs
+log-level: "info"
+log-format: "json"
+
+# Keepalive para conexiones de suscripción
+keepalive-interval: "45s"
