@@ -62,3 +62,14 @@ home-assistant/config/*.log.*
 openclaw/.env
 *.backup
 *.db
+
+# --- Backup data (solo versionar scripts, no los backups) ---
+backups/adguard/
+backups/filebrowser/
+backups/homarr/
+backups/npm/
+backups/portainer/
+backups/uptime-kuma/
+
+# --- Gotify (pendiente migración a ntfy) ---
+gotify/
