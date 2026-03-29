@@ -74,3 +74,5 @@ backups/uptime-kuma/
 # --- Gotify (pendiente migración a ntfy) ---
 gotify/
 backups/scripts/ntfy-notify.sh
+backups/vaultwarden/*.tar.gz
+backups/vaultwarden/backup.log
