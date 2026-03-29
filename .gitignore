@@ -80,3 +80,7 @@ backups/vaultwarden/backup.log
 # Restic
 backups/.restic-password
 backups/restic-repo/
+
+# Logs de mantenimiento y rotaciones
+scripts/maintenance/logs/
+**/*.log.[0-9]*
