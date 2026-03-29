@@ -76,3 +76,7 @@ gotify/
 backups/scripts/ntfy-notify.sh
 backups/vaultwarden/*.tar.gz
 backups/vaultwarden/backup.log
+
+# Restic
+backups/.restic-password
+backups/restic-repo/
