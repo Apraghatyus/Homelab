@@ -90,6 +90,10 @@ LOGS_TO_ROTATE=(
     # Logs de mantenimiento
     "/home/apraghatyus/homelab/scripts/maintenance/logs/docker-cleanup.log"
     "/home/apraghatyus/homelab/scripts/maintenance/logs/system-health.log"
+    "/home/apraghatyus/homelab/scripts/maintenance/logs/apt-maintenance.log"
+    "/home/apraghatyus/homelab/scripts/maintenance/logs/cert-check.log"
+    "/home/apraghatyus/homelab/scripts/maintenance/logs/weekly-report.log"
+    "/home/apraghatyus/homelab/scripts/maintenance/logs/temp-monitor.log"
     # Logs de backups
     "/home/apraghatyus/homelab/backups/restic-backup.log"
     # Logs de servicios
