@@ -1,0 +1,36 @@
+# ============================================
+# Homelab Apraghatyus — Pre-commit Framework
+# Para activar: pip install pre-commit && pre-commit install
+# ============================================
+repos:
+  # Hooks básicos de pre-commit
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+        name: Validar sintaxis YAML
+      - id: check-added-large-files
+        name: Bloquear archivos grandes (>500KB)
+        args: ['--maxkb=500']
+      - id: trailing-whitespace
+        name: Eliminar espacios finales
+      - id: end-of-file-fixer
+        name: Asegurar newline al final
+      - id: check-merge-conflict
+        name: Detectar marcadores de merge sin resolver
+
+  # Detección avanzada de secretos
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detectar secretos (detect-secrets)
+        args: ['--baseline', '.secrets.baseline']
+
+  # Validación de Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        name: Validar Markdown
+        args: ['--disable', 'MD013', 'MD033', '--']
