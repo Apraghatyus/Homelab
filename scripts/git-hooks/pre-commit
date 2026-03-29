@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+# ============================================
+# Homelab Apraghatyus — Pre-commit Hook
+# Fase 2: Automatización
+# ============================================
+# Verificaciones:
+#   1. Archivos .env reales no se commitean
+#   2. Secretos en archivos staged
+#   3. Archivos .env.example sin info privada
+#   4. Sintaxis YAML válida en docker-compose.yml
+# ============================================
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+BOLD='\033[1m'
+
+ERRORS=0
+WARNINGS=0
+
+header() {
+    echo ""
+    echo -e "${BLUE}${BOLD}══════════════════════════════════════${NC}"
+    echo -e "${BLUE}${BOLD}  Homelab Apraghatyus — Pre-commit${NC}"
+    echo -e "${BLUE}${BOLD}══════════════════════════════════════${NC}"
+    echo ""
+}
+
+check_pass() {
+    echo -e "  ${GREEN}✔${NC} $1"
+}
+
+check_fail() {
+    echo -e "  ${RED}✖${NC} $1"
+    ERRORS=$((ERRORS + 1))
+}
+
+check_warn() {
+    echo -e "  ${YELLOW}⚠${NC} $1"
+    WARNINGS=$((WARNINGS + 1))
+}
+
+section() {
+    echo ""
+    echo -e "${BOLD}[$1]${NC}"
+}
+
+# Obtener archivos staged (solo los que se van a commitear)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "No hay archivos staged. Nada que verificar."
+    exit 0
+fi
+
+header
+
+# ──────────────────────────────────────
+# CHECK 1: Archivos .env reales
+# ──────────────────────────────────────
+section "1/4 — Archivos .env"
+
+ENV_FILES=$(echo "$STAGED_FILES" | grep -E '(^|/)\.env$' | grep -v '\.env\.example$' || true)
+
+if [ -n "$ENV_FILES" ]; then
+    while IFS= read -r file; do
+        check_fail "Archivo .env real detectado: ${file}"
+    done <<< "$ENV_FILES"
+    echo -e "    ${RED}→ Los archivos .env contienen secretos. Usa .env.example como plantilla.${NC}"
+else
+    check_pass "Ningún archivo .env real en staging"
+fi
+
+# También verificar archivos que coincidan con *.env (como secrets.env, prod.env)
+OTHER_ENV=$(echo "$STAGED_FILES" | grep -E '\.env$' | grep -v '\.env\.example$' | grep -v -E '(^|/)\.env$' || true)
+
+if [ -n "$OTHER_ENV" ]; then
+    while IFS= read -r file; do
+        check_fail "Archivo de entorno detectado: ${file}"
+    done <<< "$OTHER_ENV"
+fi
+
+# ──────────────────────────────────────
+# CHECK 2: Secretos en archivos staged
+# ──────────────────────────────────────
+section "2/4 — Detección de secretos"
+
+# Patrones que indican secretos hardcodeados
+SECRET_PATTERNS=(
+    # Contraseñas y tokens con valor asignado
+    'password\s*[:=]\s*\S{8,}'
+    'passwd\s*[:=]\s*\S{8,}'
+    'secret\s*[:=]\s*\S{8,}'
+    'api_key\s*[:=]\s*\S{8,}'
+    'apikey\s*[:=]\s*\S{8,}'
+    'access_token\s*[:=]\s*\S{8,}'
+    'auth_token\s*[:=]\s*\S{8,}'
+    # AWS Access Keys
+    'AKIA[0-9A-Z]{16}'
+    # Llaves privadas
+    'BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY'
+    'BEGIN PGP PRIVATE KEY'
+    # Tokens genéricos largos
+    'token\s*[:=]\s*\S{32,}'
+    # Admin tokens (Vaultwarden)
+    'ADMIN_TOKEN\s*=\s*\S{8,}'
+)
+
+SECRETS_FOUND=0
+
+for file in $STAGED_FILES; do
+    # Saltar los propios scripts de hooks (contienen patrones de detección)
+    if [[ "$file" == scripts/git-hooks/* ]]; then
+        continue
+    fi
+
+    # Saltar archivos binarios y .env.example (se verifica aparte)
+    if file "$file" 2>/dev/null | grep -q "binary" 2>/dev/null; then
+        continue
+    fi
+
+    # Obtener contenido staged (no el archivo en disco, sino lo que va al commit)
+    CONTENT=$(git show ":$file" 2>/dev/null || true)
+    if [ -z "$CONTENT" ]; then
+        continue
+    fi
+
+    for pattern in "${SECRET_PATTERNS[@]}"; do
+        MATCHES=$(echo "$CONTENT" | grep -inE "$pattern" 2>/dev/null || true)
+        if [ -n "$MATCHES" ]; then
+            # Filtrar falsos positivos comunes
+            FILTERED=$(echo "$MATCHES" | grep -ivE \
+                '(example|placeholder|tu-|your-|cambiar|CHANGE_ME|xxx|dummy|\.env\.example|#\s*(password|token|secret|api)|env_file|^\s*#)' \
+                2>/dev/null || true)
+
+            if [ -n "$FILTERED" ]; then
+                check_fail "Posible secreto en ${file}:"
+                echo "$FILTERED" | head -3 | while IFS= read -r line; do
+                    # Censurar el valor para no mostrarlo en terminal
+                    CENSORED=$(echo "$line" | sed -E 's/([:=]\s*"?).{4}\S*/\1****CENSURADO****/g')
+                    echo -e "    ${RED}│${NC} $CENSORED"
+                done
+                SECRETS_FOUND=$((SECRETS_FOUND + 1))
+            fi
+        fi
+    done
+done
+
+if [ "$SECRETS_FOUND" -eq 0 ]; then
+    check_pass "No se detectaron secretos en archivos staged"
+fi
+
+# ──────────────────────────────────────
+# CHECK 3: .env.example sin info privada
+# ──────────────────────────────────────
+section "3/4 — Validación de .env.example"
+
+EXAMPLE_FILES=$(echo "$STAGED_FILES" | grep '\.env\.example$' || true)
+
+if [ -n "$EXAMPLE_FILES" ]; then
+    EXAMPLE_ISSUES=0
+
+    for file in $EXAMPLE_FILES; do
+        CONTENT=$(git show ":$file" 2>/dev/null || true)
+        if [ -z "$CONTENT" ]; then
+            continue
+        fi
+
+        # Verificar que los valores sean placeholders, no reales
+        # Buscar valores que parezcan tokens reales (largos, alfanuméricos, sin espacios)
+        SUSPICIOUS=$(echo "$CONTENT" | grep -E '^[A-Z_]+=.+$' | grep -vE \
+            '(tu-|your-|cambiar|CHANGE_ME|xxx|placeholder|example|dummy|<|>|\.\.\.|# )' \
+            2>/dev/null || true)
+
+        # De los sospechosos, filtrar los que tienen valores largos (>20 chars, parecen reales)
+        if [ -n "$SUSPICIOUS" ]; then
+            while IFS= read -r line; do
+                VALUE=$(echo "$line" | cut -d'=' -f2-)
+                if [ ${#VALUE} -gt 20 ]; then
+                    check_warn "Posible valor real en ${file}: $(echo "$line" | cut -d'=' -f1)=****"
+                    EXAMPLE_ISSUES=$((EXAMPLE_ISSUES + 1))
+                fi
+            done <<< "$SUSPICIOUS"
+        fi
+    done
+
+    if [ "$EXAMPLE_ISSUES" -eq 0 ]; then
+        check_pass "Archivos .env.example solo contienen placeholders"
+    fi
+else
+    check_pass "No hay archivos .env.example en staging (nada que validar)"
+fi
+
+# ──────────────────────────────────────
+# CHECK 4: Sintaxis YAML
+# ──────────────────────────────────────
+section "4/4 — Sintaxis YAML"
+
+YAML_FILES=$(echo "$STAGED_FILES" | grep -E '\.(yml|yaml)$' || true)
+
+if [ -n "$YAML_FILES" ]; then
+    # Verificar si Python está disponible para validar YAML
+    if command -v python3 &>/dev/null; then
+        for file in $YAML_FILES; do
+            # Validar usando el contenido staged
+            if git show ":$file" 2>/dev/null | python3 -c "
+import sys, yaml
+try:
+    yaml.safe_load(sys.stdin)
+except yaml.YAMLError as e:
+    print(str(e))
+    sys.exit(1)
+" 2>/dev/null; then
+                check_pass "YAML válido: ${file}"
+            else
+                check_fail "YAML inválido: ${file}"
+            fi
+        done
+    else
+        check_warn "Python3 no disponible — no se pudo validar YAML"
+        echo -e "    ${YELLOW}→ Instalar: sudo apt install python3 python3-yaml${NC}"
+    fi
+else
+    check_pass "No hay archivos YAML en staging"
+fi
+
+# ──────────────────────────────────────
+# RESULTADO FINAL
+# ──────────────────────────────────────
+echo ""
+echo -e "${BOLD}══════════════════════════════════════${NC}"
+
+if [ "$ERRORS" -gt 0 ]; then
+    echo -e "${RED}${BOLD}  ✖ COMMIT BLOQUEADO — $ERRORS error(es) encontrado(s)${NC}"
+    if [ "$WARNINGS" -gt 0 ]; then
+        echo -e "${YELLOW}    + $WARNINGS advertencia(s)${NC}"
+    fi
+    echo -e "${BOLD}══════════════════════════════════════${NC}"
+    echo ""
+    echo -e "  Para forzar el commit (${RED}no recomendado${NC}):"
+    echo -e "  ${YELLOW}git commit --no-verify${NC}"
+    echo ""
+    exit 1
+else
+    if [ "$WARNINGS" -gt 0 ]; then
+        echo -e "${GREEN}${BOLD}  ✔ COMMIT PERMITIDO${NC} ${YELLOW}($WARNINGS advertencia(s))${NC}"
+    else
+        echo -e "${GREEN}${BOLD}  ✔ COMMIT PERMITIDO — todas las verificaciones pasaron${NC}"
+    fi
+    echo -e "${BOLD}══════════════════════════════════════${NC}"
+    echo ""
+    exit 0
+fi

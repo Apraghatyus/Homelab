@@ -117,3 +117,4 @@ Infraestructura de homelabbing para aprendizaje de administración de servidores
 - **Commits:** `feat:` nuevo servicio, `fix:` corrección de bug, `docs:` documentación, `refactor:` reorganización
 - **Secretos:** siempre en `.env`, nunca en `docker-compose.yml`
 - **Firewall:** todo nuevo puerto se abre solo en `tailscale0`
+# test

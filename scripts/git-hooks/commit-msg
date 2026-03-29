@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# ============================================
+# Homelab Apraghatyus — Commit-msg Hook
+# Valida formato de mensajes de commit
+# ============================================
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(head -1 "$COMMIT_MSG_FILE")
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+# Prefijos válidos según convención del homelab
+VALID_PREFIXES="feat|fix|docs|refactor|chore|style|test|ci|perf"
+
+# Patrón: prefijo: descripción (mínimo 10 caracteres total)
+PATTERN="^($VALID_PREFIXES): .{3,}"
+
+if [[ ! "$COMMIT_MSG" =~ $PATTERN ]]; then
+    echo ""
+    echo -e "${RED}${BOLD}══════════════════════════════════════${NC}"
+    echo -e "${RED}${BOLD}  ✖ MENSAJE DE COMMIT INVÁLIDO${NC}"
+    echo -e "${RED}${BOLD}══════════════════════════════════════${NC}"
+    echo ""
+    echo -e "  Mensaje: ${YELLOW}\"$COMMIT_MSG\"${NC}"
+    echo ""
+    echo -e "  ${BOLD}Formato requerido:${NC} ${GREEN}<tipo>: <descripción>${NC}"
+    echo ""
+    echo -e "  ${BOLD}Prefijos válidos:${NC}"
+    echo -e "    ${GREEN}feat:${NC}     nuevo servicio o funcionalidad"
+    echo -e "    ${GREEN}fix:${NC}      corrección de bug"
+    echo -e "    ${GREEN}docs:${NC}     documentación"
+    echo -e "    ${GREEN}refactor:${NC} reorganización sin cambio funcional"
+    echo -e "    ${GREEN}chore:${NC}    mantenimiento general"
+    echo -e "    ${GREEN}style:${NC}    formato, espacios, sin cambio lógico"
+    echo -e "    ${GREEN}test:${NC}     pruebas"
+    echo -e "    ${GREEN}ci:${NC}       integración continua / hooks"
+    echo -e "    ${GREEN}perf:${NC}     mejoras de rendimiento"
+    echo ""
+    echo -e "  ${BOLD}Ejemplo:${NC} ${GREEN}feat: agregar watchtower${NC}"
+    echo ""
+    exit 1
+else
+    echo -e "${GREEN}✔${NC} Mensaje de commit válido: ${COMMIT_MSG}"
+fi
