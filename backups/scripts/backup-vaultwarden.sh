@@ -6,7 +6,7 @@
 
 source ~/homelab/backups/scripts/ntfy-notify.sh
 
-BACKUP_DIR="/home/apraghatyus/homelab/backups/vaultwarden"
+BACKUP_DIR="/mnt/nas/backups/docker/vaultwarden"
 DATE=$(date +%Y%m%d_%H%M%S)
 CONTAINER="vaultwarden"
 

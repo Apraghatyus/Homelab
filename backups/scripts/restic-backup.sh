@@ -5,7 +5,7 @@
 
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
-REPO="/home/apraghatyus/homelab/backups/restic-repo"
+REPO="/mnt/nas/backups/restic"
 PASSWORD_FILE="/home/apraghatyus/homelab/backups/.restic-password"
 LOG_FILE="/home/apraghatyus/homelab/backups/restic-backup.log"
 

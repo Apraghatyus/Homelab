@@ -5,7 +5,7 @@
 
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
-BACKUP_DIR="/home/apraghatyus/homelab/backups/memos"
+BACKUP_DIR="/mnt/nas/backups/docker/memos"
 MEMOS_DATA="/home/apraghatyus/homelab/memos/data"
 DATE=$(date +%Y%m%d_%H%M%S)
 

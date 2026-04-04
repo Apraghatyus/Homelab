@@ -1,7 +1,7 @@
 #!/bin/bash
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
-BACKUP_DIR="/home/apraghatyus/homelab/backups/npm"
+BACKUP_DIR="/mnt/nas/backups/docker/npm"
 SOURCE_DB="/home/apraghatyus/homelab/npm/data/database.sqlite"
 DATE=$(date +%Y%m%d_%H%M%S)
 

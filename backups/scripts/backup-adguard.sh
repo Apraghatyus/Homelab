@@ -2,7 +2,7 @@
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR=/home/apraghatyus/homelab/backups/adguard
+BACKUP_DIR=/mnt/nas/backups/docker/adguard
 SOURCE_DIR=/home/apraghatyus/homelab/adguard/data/conf
 
 sudo cp "$SOURCE_DIR/AdGuardHome.yaml" "$BACKUP_DIR/AdGuardHome_${TIMESTAMP}.yaml"

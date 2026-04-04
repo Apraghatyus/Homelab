@@ -1,7 +1,7 @@
 #!/bin/bash
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
-BACKUP_DIR="/home/apraghatyus/homelab/backups/portainer"
+BACKUP_DIR="/mnt/nas/backups/docker/portainer"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 MAX_BACKUPS=10
 

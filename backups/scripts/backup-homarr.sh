@@ -1,7 +1,7 @@
 #!/bin/bash
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
-BACKUP_DIR="/home/apraghatyus/homelab/backups/homarr"
+BACKUP_DIR="/mnt/nas/backups/docker/homarr"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p "$BACKUP_DIR"
