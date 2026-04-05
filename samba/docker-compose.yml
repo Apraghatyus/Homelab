@@ -4,21 +4,18 @@ services:
     container_name: samba
     restart: unless-stopped
     environment:
-      TZ: "America/Bogota"
+      TZ: ${TZ}
       SAMBA_CONF_WORKGROUP: HOMELAB
       SAMBA_CONF_MAP_TO_GUEST: "Bad User"
-
       ACCOUNT_JuanCamilo: ${SAMBA_PASSWORD}
-      UID_JuanCamilo: 1000
+      UID_JuanCamilo: "1000"
       GROUP_JuanCamilo: smb
-
       SAMBA_GLOBAL_STANZA: ${SAMBA_GLOBAL_STANZA}
       SAMBA_GLOBAL_STANZA2: ${SAMBA_GLOBAL_STANZA2}
       SAMBA_GLOBAL_STANZA3: ${SAMBA_GLOBAL_STANZA3}
       SAMBA_GLOBAL_STANZA4: ${SAMBA_GLOBAL_STANZA4}
       SAMBA_GLOBAL_STANZA5: ${SAMBA_GLOBAL_STANZA5}
       SAMBA_GLOBAL_STANZA6: ${SAMBA_GLOBAL_STANZA6}
-
       SAMBA_VOLUME_CONFIG_Public: >-
         [Public];
         path=/share/public;
@@ -26,7 +23,6 @@ services:
         browsable=yes;
         writable=yes;
         comment=Archivos compartidos
-
       SAMBA_VOLUME_CONFIG_Media: >-
         [Media];
         path=/share/media;
@@ -34,7 +30,6 @@ services:
         browsable=yes;
         writable=yes;
         comment=Peliculas musica y series
-
       SAMBA_VOLUME_CONFIG_Backups: >-
         [Backups];
         path=/share/backups;
@@ -42,7 +37,6 @@ services:
         browsable=yes;
         writable=yes;
         comment=Respaldos
-
       SAMBA_VOLUME_CONFIG_Games: >-
         [Games];
         path=/share/games;
@@ -50,19 +44,21 @@ services:
         browsable=yes;
         writable=yes;
         comment=Archivos de juegos
-
     ports:
       - "445:445"
       - "139:139"
     volumes:
-      - /srv/nas/public:/share/public
-      - /srv/nas/media:/share/media
-      - /srv/nas/backups:/share/backups
-      - /srv/nas/games:/share/games
+      - /mnt/nas/public:/share/public
+      - /mnt/nas/media:/share/media
+      - /mnt/nas/backups:/share/backups
+      - /mnt/nas/games:/share/games
     networks:
       - nas
-    env_file:
-      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
 
 networks:
   nas:

@@ -4,17 +4,31 @@ services:
     container_name: filebrowser
     restart: unless-stopped
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Bogota
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     ports:
       - "8080:80"
     volumes:
-      # Directorios NAS (los mismos que usa Samba)
-      - /srv/nas/public:/srv/public
-      - /srv/nas/media:/srv/media
-      - /srv/nas/backups:/srv/backups
-      - /srv/nas/games:/srv/games
+      # Directorios NAS
+      - /mnt/nas/public:/srv/public
+      - /mnt/nas/media:/srv/media
+      - /mnt/nas/backups:/srv/backups
+      - /mnt/nas/games:/srv/games
+      - /mnt/nas/users:/srv/users
+      # Configs del homelab (solo lectura)
+      - /home/apraghatyus/homelab:/srv/homelab-configs:ro
       # Base de datos y configuración
-      - ./filebrowser.db:/database/filebrowser.db
-      - ./settings.json:/config/settings.json
+      - /home/apraghatyus/homelab/filebrowser/filebrowser.db:/database/filebrowser.db
+      - /home/apraghatyus/homelab/filebrowser/settings.json:/config/settings.json
+    healthcheck:
+      test: wget -q --spider http://localhost:80/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.50"

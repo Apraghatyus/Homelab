@@ -4,20 +4,25 @@ services:
     container_name: syncthing
     hostname: apraghatyus
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Bogota
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - ./config:/config
-      - /srv/nas/public:/data1
-      - /srv/nas/media:/data2
-      - /srv/nas/backups:/data3
-      - /srv/nas/games:/data4
+      - /home/apraghatyus/homelab/syncthing/config:/config
+      - /mnt/nas/public:/data1
+      - /mnt/nas/media:/data2
+      - /mnt/nas/backups:/data3
+      - /mnt/nas/games:/data4
       - /home/apraghatyus/projects:/data6
       - /home/apraghatyus/homelab:/data5
     ports:
-      - 8384:8384
-      - 22000:22000/tcp
-      - 22000:22000/udp
-      - 21027:21027/udp
+      - "8384:8384"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
