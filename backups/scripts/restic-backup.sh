@@ -1,7 +1,7 @@
 #!/bin/bash
 # Restic Backup — Snapshot cifrado, comprimido y deduplicado
 # Ejecuta diariamente vía cron a las 4:30 AM (después de todos los backups individuales)
-# Respalda: ~/homelab/ (configs + scripts + backups) + /srv/nas/ (archivos NAS)
+# Respalda: ~/homelab/ (configs + scripts + backups) + /mnt/nas/ (archivos NAS)
 
 source /home/apraghatyus/homelab/backups/scripts/ntfy-notify.sh
 
@@ -14,10 +14,10 @@ echo "$(date): Iniciando backup restic..." >> "$LOG_FILE"
 
 sudo restic -r "$REPO" --password-file "$PASSWORD_FILE" backup \
   /home/apraghatyus/homelab \
-  /srv/nas \
+  /mnt/nas \
   --exclude="$REPO" \
   --exclude="/home/apraghatyus/homelab/*/data/icon_cache" \
-  --exclude="/srv/nas/*/.recycle" \
+  --exclude="/mnt/nas/*/.recycle" \
   --tag homelab \
   --tag automated \
   2>> "$LOG_FILE"
@@ -59,5 +59,5 @@ else
 fi
 
 # --- Corregir permisos (sudo crea archivos como root) ---
-chown -R apraghatyus:apraghatyus /home/apraghatyus/homelab/backups/restic-repo
+chown -R apraghatyus:apraghatyus /mnt/nas/backups/restic
 echo "---" >> "$LOG_FILE"
