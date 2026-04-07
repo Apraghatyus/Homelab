@@ -1,0 +1,52 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft
+    environment:
+      EULA: ${EULA}
+      TYPE: ${SERVER_TYPE}
+      INIT_MEMORY: ${INIT_MEMORY}
+      MAX_MEMORY: ${MAX_MEMORY}
+      TZ: ${TZ}
+      MOTD: ${MOTD}
+      SERVER_NAME: ${SERVER_NAME}
+      OPS: ${OPS}
+      DIFFICULTY: ${DIFFICULTY}
+      MODE: ${GAMEMODE}
+      MAX_PLAYERS: ${MAX_PLAYERS}
+      VIEW_DISTANCE: ${VIEW_DISTANCE}
+      SIMULATION_DISTANCE: ${SIMULATION_DISTANCE}
+      SEED: ${SEED}
+      # Flags de optimización de Aikar para Paper
+      USE_AIKAR_FLAGS: "true"
+      # Canal estable de Paper (no experimental)
+      PAPER_CHANNEL: default
+      # Plugins: GeyserMC + Floodgate (descarga automática)
+      PLUGINS: |
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+      # Habilitar RCON para comandos remotos
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "cambia_esto_por_algo_seguro"
+      # Rolling logs para no llenar disco
+      ENABLE_ROLLING_LOGS: "true"
+    ports:
+      - "25565:25565"       # Java Edition (TCP)
+      - "19132:19132/udp"   # Bedrock Edition (UDP - GeyserMC)
+    volumes:
+      - ./data:/data
+    stdin_open: true    # Necesario para consola interactiva
+    tty: true           # Necesario para consola interactiva
+    restart: unless-stopped
+    # Healthcheck usando mc-monitor integrado en la imagen
+    healthcheck:
+      test: mc-health
+      start_period: 5m
+      interval: 30s
+      retries: 6
+      timeout: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 3G      # 2G heap + overhead JVM + Geyser
+          cpus: "2.0"
