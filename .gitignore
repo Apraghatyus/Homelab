@@ -84,3 +84,4 @@ backups/restic-repo/
 # Logs de mantenimiento y rotaciones
 scripts/maintenance/logs/
 **/*.log.[0-9]*
+immich/postgres/

@@ -1,0 +1,84 @@
+name: immich
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    volumes:
+      - ${UPLOAD_LOCATION}:/data
+      - /mnt/nas/photos/immich-external:/mnt/external:ro
+    env_file:
+      - /home/apraghatyus/homelab/immich/.env
+    ports:
+      - '2283:2283'
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+          cpus: '2.0'
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    volumes:
+      - immich-model-cache:/cache
+    env_file:
+      - /home/apraghatyus/homelab/immich/.env
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+    deploy:
+      resources:
+        limits:
+          memory: 4096M
+          cpus: '2.0'
+
+  redis:
+    container_name: immich_redis
+    image: docker.io/valkey/valkey:8
+    healthcheck:
+      test: valkey-cli ping || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+
+  database:
+    container_name: immich_postgres
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    shm_size: 128mb
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '1.0'
+
+volumes:
+  immich-model-cache:
