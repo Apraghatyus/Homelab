@@ -1,0 +1,20 @@
+services:
+  terraria:
+    image: ghcr.io/beardedio/terraria:vanilla-1.4.5.6
+    container_name: terraria
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    ports:
+      - "7777:7777"
+    environment:
+      - world=/config/Worlds/${TERRARIA_WORLD_NAME}.wld
+    volumes:
+      - /home/apraghatyus/homelab/terraria/data:/config
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
