@@ -85,3 +85,6 @@ backups/restic-repo/
 scripts/maintenance/logs/
 **/*.log.[0-9]*
 immich/postgres/
+kavita/config/*.db
+kavita/config/logs/
+kavita/config/
