@@ -61,3 +61,6 @@ home-assistant/config/blueprints/
 home-assistant/config/tts/
 home-assistant/config/themes/
 home-assistant/config/home-assistant_v2.db*
+
+// Bases de datos activas - no sincronizar
+immich/postgres
