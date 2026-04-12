@@ -1,0 +1,21 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    restart: unless-stopped
+    networks:
+      - cloudflared-net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.50"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+networks:
+  cloudflared-net:
+    name: cloudflared-net
