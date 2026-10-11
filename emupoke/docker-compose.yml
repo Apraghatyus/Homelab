@@ -66,7 +66,9 @@ services:
   # Acceso de desarrollo a la base por Tailscale. Apagado por defecto.
   #   abrir:  docker compose --profile dev up -d tunel-dev
   #   cerrar: docker compose stop tunel-dev && docker compose rm -f tunel-dev
-  # Escucha SOLO en la IP de Tailscale y solo acepta clientes del tailnet.
+  # Escucha SOLO en la IP de Tailscale: esa es la frontera (solo el tailnet llega).
+  # No filtrar por origen en socat: docker-proxy entrega las conexiones con la IP
+  # de la puerta de enlace de Docker, no la del cliente, y las rechazaria todas.
   tunel-dev:
     <<: *endurecido
     image: alpine/socat:latest
@@ -74,7 +76,7 @@ services:
     profiles: [dev]
     restart: "no"
     command: >-
-      TCP-LISTEN:5432,fork,reuseaddr,max-children=5,range=100.64.0.0/10
+      TCP-LISTEN:5432,fork,reuseaddr,max-children=5
       TCP:base:5432
     ports:
       - "${EMUPOKE_PG_BIND:?falta EMUPOKE_PG_BIND}:${EMUPOKE_PG_PUERTO:-5434}:5432"
