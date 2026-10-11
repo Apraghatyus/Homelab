@@ -88,3 +88,9 @@ immich/postgres/
 kavita/config/*.db
 kavita/config/logs/
 kavita/config/
+
+# --- emupoke ---
+# Volcados de PostgreSQL: contienen cuentas de usuarios
+backups/emupoke/
+# Copias tipo archivo.bak-AAAA-MM-DD (no las cubre *.bak)
+emupoke/*.bak-*

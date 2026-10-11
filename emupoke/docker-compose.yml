@@ -1,10 +1,99 @@
 # Produccion en el homelab: ~/homelab/emupoke/
 # Publico por Cloudflare Tunnel: hostname -> http://emupoke-web:80
 # Local por Tailscale en :${EMUPOKE_PORT} (sin HTTPS el emulador no arranca: usar el tunel o NPM).
+#
+# Basado en deploy/docker-compose.yml de pokemeeting, con endurecimiento propio:
+#   - la base NO publica ningun puerto; solo la ve la red interna
+#   - roles separados (initdb/10-roles.sh): admin solo local, app sin superusuario,
+#     dev con su propia base
+#   - el acceso de desarrollo por Tailscale va en un contenedor aparte (tunel-dev,
+#     perfil "dev") para que un fallo de bind no tumbe la base ni el juego
+#   - Caddyfile propio (./Caddyfile): IP real del cliente para el rate limit + cabeceras
 name: emupoke
 
+x-endurecido: &endurecido
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
+  base:
+    <<: *endurecido
+    image: postgres:16-alpine
+    container_name: emupoke-base
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: emupoke_admin
+      POSTGRES_PASSWORD: ${EMUPOKE_PG_ADMIN_CLAVE:?falta EMUPOKE_PG_ADMIN_CLAVE en .env}
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      # Solo las lee initdb/10-roles.sh en el primer arranque.
+      EMUPOKE_PG_APP_CLAVE: ${EMUPOKE_PG_APP_CLAVE:?falta EMUPOKE_PG_APP_CLAVE en .env}
+      EMUPOKE_PG_DEV_CLAVE: ${EMUPOKE_PG_DEV_CLAVE:?falta EMUPOKE_PG_DEV_CLAVE en .env}
+    command:
+      - postgres
+      - -c
+      - password_encryption=scram-sha-256
+      - -c
+      - log_connections=on
+      - -c
+      - log_disconnections=on
+      - -c
+      - max_connections=50
+    volumes:
+      - base:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    # Sin "ports": no escucha en el host. Backups con docker exec.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emupoke_admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [interna]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # Acceso de desarrollo a la base por Tailscale. Apagado por defecto.
+  #   abrir:  docker compose --profile dev up -d tunel-dev
+  #   cerrar: docker compose stop tunel-dev && docker compose rm -f tunel-dev
+  # Escucha SOLO en la IP de Tailscale y solo acepta clientes del tailnet.
+  tunel-dev:
+    <<: *endurecido
+    image: alpine/socat:latest
+    container_name: emupoke-tunel-dev
+    profiles: [dev]
+    restart: "no"
+    command: >-
+      TCP-LISTEN:5432,fork,reuseaddr,max-children=5,range=100.64.0.0/10
+      TCP:base:5432
+    ports:
+      - "${EMUPOKE_PG_BIND:?falta EMUPOKE_PG_BIND}:${EMUPOKE_PG_PUERTO:-5434}:5432"
+    read_only: true
+    cap_drop: [ALL]
+    depends_on:
+      base:
+        condition: service_healthy
+    networks: [interna]
+    deploy:
+      resources:
+        limits:
+          memory: 32M
+          cpus: "0.25"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
   servidor:
+    <<: *endurecido
     build:
       context: ${EMUPOKE_REPO:-..}
       dockerfile: deploy/Dockerfile
@@ -17,8 +106,14 @@ services:
       RANDOMIZER_CONCURRENCIA: "2"
       RANDOMIZER_MAX_COLA: "50"
       RANDOMIZER_XMX: "768M"
+      # Claves en hex: base64 mete / + = y rompe la URL.
+      DATABASE_URL: postgres://emupoke_app:${EMUPOKE_PG_APP_CLAVE:?falta EMUPOKE_PG_APP_CLAVE en .env}@base:5432/emupoke
+      CUENTAS_COOKIE_SEGURA: "1"
+    depends_on:
+      base:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "Promise.all([8787,8788].map(p=>fetch('http://127.0.0.1:'+p+'/health').then(r=>{if(!r.ok)throw r.status}))).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "Promise.all([8787,8788,8789].map(p=>fetch('http://127.0.0.1:'+p+'/health').then(r=>{if(!r.ok)throw r.status}))).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       start_period: 30s
@@ -32,6 +127,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=false"
 
   web:
+    <<: *endurecido
     build:
       context: ${EMUPOKE_REPO:-..}
       dockerfile: deploy/Dockerfile
@@ -41,6 +137,8 @@ services:
     restart: unless-stopped
     ports:
       - "${EMUPOKE_PORT:-8790}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
       - servidor
     networks: [interna, cloudflared-net]
@@ -51,6 +149,10 @@ services:
           cpus: "0.50"
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
+
+volumes:
+  # Lo unico del proyecto que hay que respaldar (backups/scripts/backup-emupoke.sh).
+  base:
 
 networks:
   interna:
